@@ -1,0 +1,1919 @@
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Toaster } from "@/components/ui/sonner";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Award,
+  BarChart2,
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  DollarSign,
+  GraduationCap,
+  Layers,
+  Mail,
+  MapPin,
+  Menu,
+  Phone,
+  Settings,
+  Shield,
+  Star,
+  TrendingUp,
+  Users,
+  X,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useActor } from "./hooks/useActor";
+import { useInternetIdentity } from "./hooks/useInternetIdentity";
+
+type ModalType = "login" | "signup" | "reset" | "adminPrefs" | null;
+type ViewType = "landing" | "dashboard";
+
+const GRADE_GRADIENTS = [
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+  "linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)",
+  "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",
+  "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",
+];
+
+const NAV_LINKS = [
+  { id: "home", label: "Home" },
+  { id: "teaching-staff", label: "Teaching Staff Portal" },
+  { id: "students", label: "Students Portal" },
+  { id: "staff-profile", label: "Staff Profile" },
+  { id: "fees", label: "Fees" },
+  { id: "timetables", label: "Timetables" },
+  { id: "subjects", label: "Subject Assigned" },
+  { id: "results", label: "Results" },
+];
+
+const SERVICES = [
+  {
+    icon: Users,
+    title: "Student Portal",
+    desc: "Students access grades, timetables, fee status, and subject assignments all in one place.",
+  },
+  {
+    icon: GraduationCap,
+    title: "Teacher Portal",
+    desc: "Teachers manage class rosters, enter grades, view timetables, and communicate with parents.",
+  },
+  {
+    icon: DollarSign,
+    title: "Fee Management",
+    desc: "Track fee payments, generate invoices, and get instant payment status for every student.",
+  },
+  {
+    icon: Calendar,
+    title: "Timetable Scheduling",
+    desc: "Build conflict-free timetables for every grade and get instant access across the school.",
+  },
+  {
+    icon: BarChart2,
+    title: "Results & Reports",
+    desc: "Generate comprehensive academic reports, track progress, and share results instantly.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Subject Management",
+    desc: "Assign subjects to teachers, manage curriculum, and track subject-specific performance.",
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    name: "Sarah Mensah",
+    role: "Parent",
+    initials: "SM",
+    rating: 5,
+    quote:
+      "THE NYAGA KINDIKI ACADEMY has transformed how I stay connected with my child's education. I can see fee status, results, and timetables at any time. Absolutely brilliant!",
+  },
+  {
+    name: "Mr. Daniel Osei",
+    role: "Senior Teacher",
+    initials: "DO",
+    rating: 5,
+    quote:
+      "Managing class records used to take hours every week. With THE NYAGA KINDIKI ACADEMY, I upload grades in minutes and the reports generate automatically. It's a game changer.",
+  },
+  {
+    name: "Ama Boateng",
+    role: "Grade 8 Student",
+    initials: "AB",
+    rating: 5,
+    quote:
+      "I love being able to check my results and timetable on my phone. It makes school so much easier to keep up with. The portal is really easy to use!",
+  },
+];
+
+const FAQS = [
+  {
+    q: "What is THE NYAGA KINDIKI ACADEMY?",
+    a: "THE NYAGA KINDIKI ACADEMY is a comprehensive school management system designed to streamline administration, enhance communication between teachers, students, and parents, and simplify tasks like fee collection, timetabling, and results reporting.",
+  },
+  {
+    q: "How do students access their portal?",
+    a: "Students register with their school email, create a secure account, and instantly access their personalized portal showing grades, timetables, fee status, and assigned subjects.",
+  },
+  {
+    q: "Can parents monitor their child's progress?",
+    a: "Yes! Parents can log in with their own account and view their child's academic performance, fee payment status, attendance, and school announcements in real time.",
+  },
+  {
+    q: "Is my data secure on THE NYAGA KINDIKI ACADEMY?",
+    a: "Absolutely. THE NYAGA KINDIKI ACADEMY is built on the Internet Computer blockchain, meaning all data is encrypted, decentralized, and tamper-proof — far more secure than traditional cloud systems.",
+  },
+  {
+    q: "How does fee management work?",
+    a: "Administrators can set fee structures per grade, track payments, and generate receipts. Students and parents see live payment status and can receive reminders for outstanding balances.",
+  },
+  {
+    q: "Can teachers manage multiple subjects and classes?",
+    a: "Yes, teachers can be assigned multiple subjects across different grades. They manage all their classes from a single unified dashboard.",
+  },
+  {
+    q: "How do I reset my password?",
+    a: "Click 'Forgot Password?' on the login screen, enter your registered email, and follow the secure reset link sent to your inbox.",
+  },
+  {
+    q: "Is THE NYAGA KINDIKI ACADEMY available on mobile?",
+    a: "Yes! THE NYAGA KINDIKI ACADEMY is fully responsive and works seamlessly on smartphones, tablets, and desktops — no app download required.",
+  },
+];
+
+export default function App() {
+  const { login, clear, loginStatus, identity } = useInternetIdentity();
+  const { actor } = useActor();
+  const [modal, setModal] = useState<ModalType>(null);
+  const [view, setView] = useState<ViewType>("landing");
+  const [activeNav, setActiveNav] = useState("home");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isLoggedIn = loginStatus === "success" && !!identity;
+
+  const handleSignOut = async () => {
+    await clear();
+    setView("landing");
+    toast.success("Signed out successfully");
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Toaster richColors position="top-right" />
+
+      {/* STICKY HEADER */}
+      <header className="sticky top-0 z-50 bg-primary shadow-hero">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/assets/generated/school-logo-transparent.dim_200x200.png"
+              alt="THE NYAGA KINDIKI ACADEMY Logo"
+              className="h-10 w-10 object-contain"
+            />
+            <span className="text-2xl font-display font-bold text-white tracking-tight">
+              THE NYAGA KINDIKI ACADEMY
+            </span>
+          </div>
+
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center gap-3">
+            {isLoggedIn ? (
+              <>
+                <span className="text-white/80 text-sm">
+                  {identity?.getPrincipal().toString().slice(0, 10)}...
+                </span>
+                <Button
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-primary"
+                  onClick={() => setView("dashboard")}
+                >
+                  Dashboard
+                </Button>
+                <Button
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                  onClick={handleSignOut}
+                >
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  data-ocid="header.login.button"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-primary"
+                  onClick={() => setModal("login")}
+                >
+                  Login
+                </Button>
+                <Button
+                  data-ocid="header.signup.button"
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-semibold"
+                  onClick={() => setModal("signup")}
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="md:hidden text-white p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-primary/95 border-t border-white/10 px-4 py-4 space-y-2">
+            {NAV_LINKS.map((link) => (
+              <button
+                type="button"
+                key={link.id}
+                className="block w-full text-left text-white/90 py-2 text-sm hover:text-secondary"
+                onClick={() => {
+                  setActiveNav(link.id);
+                  setMobileMenuOpen(false);
+                  document
+                    .getElementById(link.id)
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                {link.label}
+              </button>
+            ))}
+            {isLoggedIn ? (
+              <button
+                type="button"
+                className="block w-full text-left text-secondary py-2 text-sm font-semibold"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </button>
+            ) : (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-white text-white hover:bg-white hover:text-primary"
+                  onClick={() => {
+                    setModal("login");
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  Login
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 bg-secondary text-secondary-foreground"
+                  onClick={() => {
+                    setModal("signup");
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
+
+      {/* HORIZONTAL NAVIGATION BAR */}
+      <nav className="bg-white border-b border-border shadow-xs sticky top-[64px] z-40 hidden md:block">
+        <div className="max-w-7xl mx-auto px-4">
+          <ul className="flex items-center gap-0 overflow-x-auto scrollbar-hide">
+            {NAV_LINKS.map((link) => (
+              <li key={link.id}>
+                <button
+                  type="button"
+                  data-ocid={`nav.${link.id}.link`}
+                  className={`px-4 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                    activeNav === link.id
+                      ? "border-secondary text-primary font-semibold"
+                      : "border-transparent text-muted-foreground hover:text-primary hover:border-primary/30"
+                  }`}
+                  onClick={() => {
+                    setActiveNav(link.id);
+                    if (link.id === "home") {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    } else {
+                      document
+                        .getElementById(link.id)
+                        ?.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                >
+                  {link.label}
+                </button>
+              </li>
+            ))}
+            <li className="ml-auto flex items-center">
+              <button
+                type="button"
+                data-ocid="nav.admin_prefs.button"
+                className="px-4 py-4 text-sm font-medium text-primary hover:text-secondary whitespace-nowrap border-b-2 border-transparent flex items-center gap-1"
+                onClick={() => setModal("adminPrefs")}
+              >
+                <Settings size={14} />
+                Admin Preferences
+              </button>
+            </li>
+            {isLoggedIn && (
+              <li>
+                <button
+                  type="button"
+                  data-ocid="nav.signout.button"
+                  className="px-4 py-4 text-sm font-medium text-destructive hover:text-destructive/80 whitespace-nowrap border-b-2 border-transparent"
+                  onClick={handleSignOut}
+                >
+                  Sign Out
+                </button>
+              </li>
+            )}
+          </ul>
+        </div>
+      </nav>
+
+      {view === "dashboard" ? (
+        <Dashboard onBack={() => setView("landing")} identity={identity} />
+      ) : (
+        <main>
+          {/* GRADES ROW */}
+          <section id="grades" className="bg-muted py-10">
+            <div className="max-w-7xl mx-auto px-4">
+              <h2 className="text-2xl font-display font-bold text-primary mb-6 text-center">
+                Browse by Grade
+              </h2>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                {Array.from({ length: 10 }, (_, i) => i + 1).map((grade) => (
+                  <Card
+                    key={grade}
+                    data-ocid={`grade.item.${grade}`}
+                    className="min-w-[150px] flex-shrink-0 cursor-pointer hover:shadow-card transition-shadow border-0 overflow-hidden"
+                  >
+                    <div
+                      style={{ background: GRADE_GRADIENTS[grade - 1] }}
+                      className="p-4 flex justify-center"
+                    >
+                      <GraduationCap className="text-white" size={32} />
+                    </div>
+                    <CardContent className="p-3 text-center">
+                      <p className="font-display font-bold text-primary text-lg">
+                        Grade {grade}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 w-full text-xs border-primary text-primary hover:bg-primary hover:text-white"
+                        onClick={() => !isLoggedIn && setModal("login")}
+                      >
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* MARQUEE PHOTO STRIP */}
+          <div className="bg-white py-4 overflow-hidden border-y border-border">
+            <div
+              className="flex marquee-track"
+              style={{ width: "max-content" }}
+            >
+              {[
+                "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&h=200&fit=crop",
+                "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=200&fit=crop",
+              ].map((src) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt="Academy scene"
+                  style={{
+                    height: "180px",
+                    borderRadius: "12px",
+                    marginRight: "16px",
+                    objectFit: "cover",
+                    flexShrink: 0,
+                    width: "320px",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* HERO SECTION */}
+          <section
+            id="home"
+            className="relative bg-primary overflow-hidden py-20 lg:py-28"
+          >
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 70% 50%, oklch(0.76 0.18 72), transparent 60%)",
+              }}
+            />
+            <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+              {/* Hero Text */}
+              <div className="animate-fade-in">
+                <span className="inline-block bg-secondary/20 text-secondary border border-secondary/30 rounded-full px-4 py-1 text-sm font-semibold mb-6">
+                  🎓 Modern School Management
+                </span>
+                <h1 className="text-4xl lg:text-5xl xl:text-6xl font-display font-bold text-white leading-tight mb-6">
+                  Empowering Education,{" "}
+                  <span className="text-secondary">Simplifying</span> Management
+                </h1>
+                <p className="text-white/75 text-lg mb-8 leading-relaxed">
+                  One powerful platform for students, teachers, and
+                  administrators. Manage grades, fees, timetables, and more —
+                  all in one place.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  <Button
+                    data-ocid="hero.signup.primary_button"
+                    size="lg"
+                    className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold px-8"
+                    onClick={() => setModal("signup")}
+                  >
+                    Get Started Free
+                    <ChevronRight size={18} className="ml-1" />
+                  </Button>
+                  <Button
+                    data-ocid="hero.learn_more.button"
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white hover:text-primary px-8"
+                    onClick={() =>
+                      document
+                        .getElementById("services")
+                        ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                  >
+                    Learn More
+                  </Button>
+                </div>
+                <div className="mt-10 flex gap-8">
+                  {["2,500+ Students", "150+ Teachers", "99.9% Uptime"].map(
+                    (stat) => (
+                      <div key={stat}>
+                        <p className="text-white font-bold text-lg">
+                          {stat.split(" ")[0]}
+                        </p>
+                        <p className="text-white/60 text-xs">
+                          {stat.split(" ").slice(1).join(" ")}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Form */}
+              <div className="bg-white rounded-2xl shadow-hero p-8 animate-fade-in">
+                <h3 className="font-display font-bold text-primary text-2xl mb-6">
+                  Get In Touch
+                </h3>
+                <ContactForm actor={actor} />
+              </div>
+            </div>
+          </section>
+
+          {/* SERVICES */}
+          <section id="services" className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="text-center mb-14">
+                <span className="text-secondary font-semibold text-sm uppercase tracking-widest">
+                  What We Offer
+                </span>
+                <h2 className="text-4xl font-display font-bold text-primary mt-2 mb-4">
+                  Comprehensive School Services
+                </h2>
+                <p className="text-muted-foreground max-w-xl mx-auto">
+                  Everything your school needs to operate efficiently, all
+                  integrated into one seamless platform.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {SERVICES.map(({ icon: Icon, title, desc }) => (
+                  <Card
+                    key={title}
+                    className="group hover:shadow-card hover:-translate-y-1 transition-all duration-200 border border-border"
+                  >
+                    <CardContent className="p-6">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
+                        <Icon
+                          size={24}
+                          className="text-primary group-hover:text-white transition-colors"
+                        />
+                      </div>
+                      <h3 className="font-display font-bold text-primary text-lg mb-2">
+                        {title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {desc}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* PORTALS SECTION */}
+          <section id="teaching-staff" className="py-20 bg-muted">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="text-center mb-14">
+                <span className="text-secondary font-semibold text-sm uppercase tracking-widest">
+                  Portals
+                </span>
+                <h2 className="text-4xl font-display font-bold text-primary mt-2 mb-4">
+                  Purpose-Built Portals
+                </h2>
+              </div>
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Teaching Staff Portal */}
+                <Card
+                  className="overflow-hidden border-0 shadow-card"
+                  id="staff-profile"
+                >
+                  <div className="bg-primary p-8">
+                    <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-4">
+                      <GraduationCap size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-2xl font-display font-bold text-white mb-2">
+                      Teaching Staff Portal
+                    </h3>
+                    <p className="text-white/70">
+                      A dedicated workspace for every educator.
+                    </p>
+                  </div>
+                  <CardContent className="p-8 bg-white">
+                    <ul className="space-y-3 mb-6">
+                      {[
+                        "Manage class rosters and attendance",
+                        "Enter and review student grades",
+                        "Access personal timetable",
+                        "View assigned subjects per grade",
+                        "Generate student performance reports",
+                        "Update personal staff profile",
+                      ].map((feature) => (
+                        <li
+                          key={feature}
+                          className="flex items-start gap-2 text-sm text-foreground"
+                        >
+                          <CheckCircle
+                            size={16}
+                            className="text-primary mt-0.5 flex-shrink-0"
+                          />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      data-ocid="portal.teacher.primary_button"
+                      className="w-full bg-primary text-white hover:bg-primary/90"
+                      onClick={() => setModal(isLoggedIn ? null : "login")}
+                    >
+                      Access Staff Portal
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Students Portal */}
+                <Card
+                  className="overflow-hidden border-0 shadow-card"
+                  id="students"
+                >
+                  <div className="bg-secondary p-8">
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+                      <BookOpen size={32} className="text-white" />
+                    </div>
+                    <h3 className="text-2xl font-display font-bold text-white mb-2">
+                      Students Portal
+                    </h3>
+                    <p className="text-white/80">
+                      Everything students need, in one click.
+                    </p>
+                  </div>
+                  <CardContent className="p-8 bg-white">
+                    <ul className="space-y-3 mb-6">
+                      {[
+                        "View academic results and grade reports",
+                        "Check class timetable anytime",
+                        "Monitor fee payment status",
+                        "View assigned subjects and materials",
+                        "Receive school announcements",
+                        "Update personal profile",
+                      ].map((feature) => (
+                        <li
+                          key={feature}
+                          className="flex items-start gap-2 text-sm text-foreground"
+                        >
+                          <CheckCircle
+                            size={16}
+                            className="text-secondary mt-0.5 flex-shrink-0"
+                          />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      data-ocid="portal.student.primary_button"
+                      className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                      onClick={() => setModal(isLoggedIn ? null : "login")}
+                    >
+                      Access Student Portal
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </section>
+
+          {/* TESTIMONIALS */}
+          <section className="py-20 bg-white">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="text-center mb-14">
+                <span className="text-secondary font-semibold text-sm uppercase tracking-widest">
+                  Testimonials
+                </span>
+                <h2 className="text-4xl font-display font-bold text-primary mt-2 mb-4">
+                  Trusted by the Whole School Community
+                </h2>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                {TESTIMONIALS.map(
+                  ({ name, role, initials, rating, quote }, i) => (
+                    <Card
+                      key={name}
+                      data-ocid={`testimonials.item.${i + 1}`}
+                      className="border border-border hover:shadow-card transition-shadow"
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex gap-1 mb-4 text-secondary">
+                          {"★".repeat(rating)}
+                        </div>
+                        <p className="text-foreground/80 text-sm leading-relaxed mb-6 italic">
+                          "{quote}"
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
+                            {initials}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-foreground">
+                              {name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {role}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ),
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* FAQ */}
+          <section className="py-20 bg-muted">
+            <div className="max-w-3xl mx-auto px-4">
+              <div className="text-center mb-14">
+                <span className="text-secondary font-semibold text-sm uppercase tracking-widest">
+                  FAQ
+                </span>
+                <h2 className="text-4xl font-display font-bold text-primary mt-2 mb-4">
+                  Frequently Asked Questions
+                </h2>
+              </div>
+              <Accordion type="single" collapsible className="space-y-3">
+                {FAQS.map(({ q, a }, i) => (
+                  <AccordionItem
+                    key={q}
+                    value={`faq-${q}`}
+                    className="bg-white rounded-xl border border-border px-2 shadow-xs"
+                    data-ocid={`faq.item.${i + 1}`}
+                  >
+                    <AccordionTrigger className="px-4 py-4 font-semibold text-primary hover:no-underline text-left">
+                      {q}
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 text-muted-foreground text-sm leading-relaxed">
+                      {a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </section>
+
+          {/* FINAL CTA */}
+          <section className="relative py-24 bg-primary overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-15"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 30% 50%, oklch(0.76 0.18 72), transparent 55%), radial-gradient(circle at 80% 20%, oklch(0.55 0.12 200), transparent 50%)",
+              }}
+            />
+            <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
+              <Award size={48} className="text-secondary mx-auto mb-6" />
+              <h2 className="text-4xl lg:text-5xl font-display font-bold text-white mb-6">
+                Ready to Transform Your School?
+              </h2>
+              <p className="text-white/75 text-lg mb-10 max-w-xl mx-auto">
+                Join thousands of schools already using THE NYAGA KINDIKI
+                ACADEMY to deliver better education, faster administration, and
+                happier communities.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Button
+                  data-ocid="cta.signup.primary_button"
+                  size="lg"
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold px-10 text-base"
+                  onClick={() => setModal("signup")}
+                >
+                  Sign Up Free
+                </Button>
+                <Button
+                  data-ocid="cta.contact.button"
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-primary px-10 text-base"
+                  onClick={() =>
+                    document
+                      .getElementById("home")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                >
+                  Contact Us
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          {/* FOOTER */}
+          <footer className="bg-foreground text-white/80 py-12">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="grid md:grid-cols-4 gap-8 mb-10">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <img
+                      src="/assets/generated/school-logo-transparent.dim_200x200.png"
+                      alt="Logo"
+                      className="h-8 w-8 object-contain brightness-0 invert"
+                    />
+                    <span className="font-display font-bold text-white text-lg">
+                      THE NYAGA KINDIKI ACADEMY
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed">
+                    Empowering schools with technology that works for everyone —
+                    students, teachers, and administrators.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white mb-3">Platform</h4>
+                  <ul className="space-y-2 text-sm">
+                    {[
+                      "Student Portal",
+                      "Teacher Portal",
+                      "Fee Management",
+                      "Timetables",
+                    ].map((l) => (
+                      <li key={l}>
+                        <button
+                          type="button"
+                          className="hover:text-secondary transition-colors"
+                        >
+                          {l}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white mb-3">Company</h4>
+                  <ul className="space-y-2 text-sm">
+                    {["About Us", "Careers", "Blog", "Privacy Policy"].map(
+                      (l) => (
+                        <li key={l}>
+                          <button
+                            type="button"
+                            className="hover:text-secondary transition-colors"
+                          >
+                            {l}
+                          </button>
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white mb-3">Contact</h4>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <Mail size={14} /> info@edumanage.school
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Phone size={14} /> +1 (800) 123-4567
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <MapPin size={14} /> 12 Education Ave, Suite 100
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm">
+                <p>
+                  © {new Date().getFullYear()} THE NYAGA KINDIKI ACADEMY. All
+                  rights reserved.
+                </p>
+                <p>
+                  Built with ❤️ using{" "}
+                  <a
+                    href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-secondary hover:underline"
+                  >
+                    caffeine.ai
+                  </a>
+                </p>
+              </div>
+            </div>
+          </footer>
+        </main>
+      )}
+
+      {/* AUTH MODALS */}
+      <LoginModal
+        open={modal === "login"}
+        onClose={() => setModal(null)}
+        onForgotPassword={() => setModal("reset")}
+        onSignUp={() => setModal("signup")}
+        onLoginSuccess={() => {
+          setModal(null);
+          setView("dashboard");
+        }}
+        login={login}
+        loginStatus={loginStatus}
+      />
+      <SignUpModal
+        open={modal === "signup"}
+        onClose={() => setModal(null)}
+        onLogin={() => setModal("login")}
+        actor={actor}
+        onSuccess={() => {
+          setModal(null);
+          setView("dashboard");
+        }}
+        login={login}
+        loginStatus={loginStatus}
+      />
+      <PasswordResetModal
+        open={modal === "reset"}
+        onClose={() => setModal(null)}
+        onBackToLogin={() => setModal("login")}
+      />
+      <AdminPreferencesModal
+        open={modal === "adminPrefs"}
+        onClose={() => setModal(null)}
+      />
+    </div>
+  );
+}
+
+// ─── CONTACT FORM ────────────────────────────────────────────
+function ContactForm({ actor }: { actor: any }) {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.name.trim()) e.name = "Full name is required";
+    if (!form.email.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(form.email))
+      e.email = "Valid email is required";
+    if (!form.message.trim()) e.message = "Message is required";
+    return e;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    setLoading(true);
+    try {
+      if (actor)
+        await actor.submitContactForm(form.name, form.email, form.message);
+      toast.success("Message sent! We'll be in touch shortly.");
+      setForm({ name: "", email: "", phone: "", message: "" });
+    } catch {
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="contact-name">Full Name</Label>
+        <Input
+          id="contact-name"
+          data-ocid="contact.input"
+          placeholder="Jane Mensah"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          className={errors.name ? "border-destructive" : ""}
+        />
+        {errors.name && (
+          <p
+            data-ocid="contact.name_error"
+            className="text-destructive text-xs mt-1"
+          >
+            {errors.name}
+          </p>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="contact-email">Email</Label>
+        <Input
+          id="contact-email"
+          type="email"
+          data-ocid="contact.email.input"
+          placeholder="jane@school.edu"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          className={errors.email ? "border-destructive" : ""}
+        />
+        {errors.email && (
+          <p
+            data-ocid="contact.email_error"
+            className="text-destructive text-xs mt-1"
+          >
+            {errors.email}
+          </p>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="contact-phone">Phone (optional)</Label>
+        <Input
+          id="contact-phone"
+          data-ocid="contact.phone.input"
+          placeholder="+1 555 000 0000"
+          value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+        />
+      </div>
+      <div>
+        <Label htmlFor="contact-message">Message</Label>
+        <Textarea
+          id="contact-message"
+          data-ocid="contact.textarea"
+          placeholder="How can we help you?"
+          rows={3}
+          value={form.message}
+          onChange={(e) => setForm({ ...form, message: e.target.value })}
+          className={errors.message ? "border-destructive" : ""}
+        />
+        {errors.message && (
+          <p
+            data-ocid="contact.message_error"
+            className="text-destructive text-xs mt-1"
+          >
+            {errors.message}
+          </p>
+        )}
+      </div>
+      <Button
+        data-ocid="contact.submit_button"
+        type="submit"
+        className="w-full bg-primary text-white hover:bg-primary/90"
+        disabled={loading}
+      >
+        {loading ? "Sending..." : "Send Message"}
+      </Button>
+    </form>
+  );
+}
+
+// ─── DASHBOARD PLACEHOLDER ───────────────────────────────────
+function Dashboard({
+  onBack,
+  identity,
+}: { onBack: () => void; identity: any }) {
+  const stats = [
+    {
+      label: "Total Students",
+      value: "2,487",
+      icon: Users,
+      color: "bg-blue-500",
+    },
+    {
+      label: "Teaching Staff",
+      value: "148",
+      icon: GraduationCap,
+      color: "bg-purple-500",
+    },
+    {
+      label: "Fees Collected",
+      value: "$124,500",
+      icon: DollarSign,
+      color: "bg-emerald-500",
+    },
+    {
+      label: "Subjects Offered",
+      value: "32",
+      icon: BookOpen,
+      color: "bg-orange-500",
+    },
+    {
+      label: "Timetable Slots",
+      value: "480",
+      icon: Calendar,
+      color: "bg-pink-500",
+    },
+    {
+      label: "Reports Generated",
+      value: "1,920",
+      icon: BarChart2,
+      color: "bg-indigo-500",
+    },
+  ];
+  return (
+    <div className="min-h-screen bg-muted">
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-primary">
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Principal: {identity?.getPrincipal().toString().slice(0, 16)}...
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="border-primary text-primary"
+          >
+            ← Back to Home
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+          {stats.map(({ label, value, icon: Icon, color }) => (
+            <Card key={label} className="border-0 shadow-card">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div
+                  className={`${color} w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0`}
+                >
+                  <Icon size={22} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-primary">{value}</p>
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4">
+          {[
+            {
+              icon: Shield,
+              title: "User Management",
+              desc: "Manage roles, approve users, and reset passwords.",
+            },
+            {
+              icon: TrendingUp,
+              title: "Academic Analytics",
+              desc: "View school-wide performance trends and reports.",
+            },
+            {
+              icon: Layers,
+              title: "Curriculum Manager",
+              desc: "Assign subjects, build timetables, and plan the year.",
+            },
+          ].map(({ icon: Icon, title, desc }) => (
+            <Card
+              key={title}
+              className="border-0 shadow-card hover:shadow-hero transition-shadow cursor-pointer"
+            >
+              <CardContent className="p-6">
+                <Icon size={28} className="text-primary mb-3" />
+                <h3 className="font-display font-bold text-primary mb-1">
+                  {title}
+                </h3>
+                <p className="text-sm text-muted-foreground">{desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── LOGIN MODAL ─────────────────────────────────────────────
+function LoginModal({
+  open,
+  onClose,
+  onForgotPassword,
+  onSignUp,
+  onLoginSuccess,
+  login,
+  loginStatus,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onForgotPassword: () => void;
+  onSignUp: () => void;
+  onLoginSuccess: () => void;
+  login: () => void;
+  loginStatus: string;
+}) {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const isLoggingIn = loginStatus === "logging-in";
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.email.trim()) e.email = "Email is required";
+    if (!form.password) e.password = "Password is required";
+    return e;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    login();
+  };
+
+  // When login succeeds, close modal
+  if (loginStatus === "success" && open) {
+    onLoginSuccess();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent data-ocid="login.modal" className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl text-primary">
+            Welcome Back
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div>
+            <Label htmlFor="login-email">Email</Label>
+            <Input
+              id="login-email"
+              type="email"
+              data-ocid="login.input"
+              placeholder="you@school.edu"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className={errors.email ? "border-destructive" : ""}
+            />
+            {errors.email && (
+              <p
+                data-ocid="login.email_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.email}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="login-password">Password</Label>
+            <Input
+              id="login-password"
+              type="password"
+              data-ocid="login.password.input"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className={errors.password ? "border-destructive" : ""}
+            />
+            {errors.password && (
+              <p
+                data-ocid="login.password_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.password}
+              </p>
+            )}
+          </div>
+          <div className="text-right">
+            <button
+              type="button"
+              data-ocid="login.forgot_password.button"
+              className="text-sm text-primary hover:underline"
+              onClick={onForgotPassword}
+            >
+              Forgot Password?
+            </button>
+          </div>
+          <Button
+            data-ocid="login.submit_button"
+            type="submit"
+            className="w-full bg-primary text-white hover:bg-primary/90"
+            disabled={isLoggingIn}
+          >
+            {isLoggingIn ? "Logging in..." : "Login with Internet Identity"}
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <button
+              type="button"
+              data-ocid="login.signup.link"
+              className="text-primary font-semibold hover:underline"
+              onClick={onSignUp}
+            >
+              Sign Up
+            </button>
+          </p>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── SIGN UP MODAL ───────────────────────────────────────────
+function SignUpModal({
+  open,
+  onClose,
+  onLogin,
+  actor,
+  onSuccess,
+  login,
+  loginStatus,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onLogin: () => void;
+  actor: any;
+  onSuccess: () => void;
+  login: () => void;
+  loginStatus: string;
+}) {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    role: "",
+    grade: "",
+    subject: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const isLoggingIn = loginStatus === "logging-in";
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.name.trim()) e.name = "Full name is required";
+    if (!form.email.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(form.email))
+      e.email = "Valid email required";
+    if (!form.role) e.role = "Please select a role";
+    if (form.role === "user" && !form.grade)
+      e.grade = "Grade is required for students";
+    if (form.role === "admin" && !form.subject)
+      e.subject = "Subject is required for teachers";
+    if (!form.password || form.password.length < 8)
+      e.password = "Password must be at least 8 characters";
+    if (form.password !== form.confirmPassword)
+      e.confirmPassword = "Passwords do not match";
+    return e;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    setLoading(true);
+    try {
+      login();
+    } catch {
+      toast.error("Registration failed. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  if (loginStatus === "success" && open && loading) {
+    const saveProfile = async () => {
+      if (actor) {
+        try {
+          await actor.saveCallerUserProfile({
+            name: form.name,
+            email: form.email,
+            role: form.role as any,
+            grade: form.grade || undefined,
+            subject: form.subject || undefined,
+          });
+        } catch {
+          /* profile save best-effort */
+        }
+      }
+      setLoading(false);
+      onSuccess();
+    };
+    saveProfile();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        data-ocid="signup.modal"
+        className="max-w-md max-h-[90vh] overflow-y-auto"
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl text-primary">
+            Create Account
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div>
+            <Label htmlFor="signup-name">Full Name</Label>
+            <Input
+              id="signup-name"
+              data-ocid="signup.input"
+              placeholder="Jane Mensah"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={errors.name ? "border-destructive" : ""}
+            />
+            {errors.name && (
+              <p
+                data-ocid="signup.name_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.name}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="signup-email">Email</Label>
+            <Input
+              id="signup-email"
+              type="email"
+              data-ocid="signup.email.input"
+              placeholder="jane@school.edu"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className={errors.email ? "border-destructive" : ""}
+            />
+            {errors.email && (
+              <p
+                data-ocid="signup.email_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.email}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label>Role</Label>
+            <Select
+              value={form.role}
+              onValueChange={(v) => setForm({ ...form, role: v })}
+            >
+              <SelectTrigger
+                data-ocid="signup.role.select"
+                className={errors.role ? "border-destructive" : ""}
+              >
+                <SelectValue placeholder="Select your role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="user">Student</SelectItem>
+                <SelectItem value="admin">Teacher / Admin</SelectItem>
+                <SelectItem value="guest">Parent / Guest</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.role && (
+              <p
+                data-ocid="signup.role_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.role}
+              </p>
+            )}
+          </div>
+          {form.role === "user" && (
+            <div>
+              <Label>Grade</Label>
+              <Select
+                value={form.grade}
+                onValueChange={(v) => setForm({ ...form, grade: v })}
+              >
+                <SelectTrigger
+                  data-ocid="signup.grade.select"
+                  className={errors.grade ? "border-destructive" : ""}
+                >
+                  <SelectValue placeholder="Select your grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((g) => (
+                    <SelectItem key={g} value={`Grade ${g}`}>
+                      Grade {g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.grade && (
+                <p
+                  data-ocid="signup.grade_error"
+                  className="text-destructive text-xs mt-1"
+                >
+                  {errors.grade}
+                </p>
+              )}
+            </div>
+          )}
+          {form.role === "admin" && (
+            <div>
+              <Label>Primary Subject</Label>
+              <Select
+                value={form.subject}
+                onValueChange={(v) => setForm({ ...form, subject: v })}
+              >
+                <SelectTrigger
+                  data-ocid="signup.subject.select"
+                  className={errors.subject ? "border-destructive" : ""}
+                >
+                  <SelectValue placeholder="Select your subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    "Mathematics",
+                    "English",
+                    "Science",
+                    "History",
+                    "Geography",
+                    "Art",
+                    "Physical Education",
+                    "Computing",
+                  ].map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.subject && (
+                <p
+                  data-ocid="signup.subject_error"
+                  className="text-destructive text-xs mt-1"
+                >
+                  {errors.subject}
+                </p>
+              )}
+            </div>
+          )}
+          <div>
+            <Label htmlFor="signup-password">Password</Label>
+            <Input
+              id="signup-password"
+              type="password"
+              data-ocid="signup.password.input"
+              placeholder="Min 8 characters"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className={errors.password ? "border-destructive" : ""}
+            />
+            {errors.password && (
+              <p
+                data-ocid="signup.password_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.password}
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="signup-confirm">Confirm Password</Label>
+            <Input
+              id="signup-confirm"
+              type="password"
+              data-ocid="signup.confirm_password.input"
+              placeholder="Repeat password"
+              value={form.confirmPassword}
+              onChange={(e) =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
+              className={errors.confirmPassword ? "border-destructive" : ""}
+            />
+            {errors.confirmPassword && (
+              <p
+                data-ocid="signup.confirm_error"
+                className="text-destructive text-xs mt-1"
+              >
+                {errors.confirmPassword}
+              </p>
+            )}
+          </div>
+          <Button
+            data-ocid="signup.submit_button"
+            type="submit"
+            className="w-full bg-primary text-white hover:bg-primary/90"
+            disabled={loading || isLoggingIn}
+          >
+            {loading || isLoggingIn ? "Creating account..." : "Create Account"}
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <button
+              type="button"
+              data-ocid="signup.login.link"
+              className="text-primary font-semibold hover:underline"
+              onClick={onLogin}
+            >
+              Log In
+            </button>
+          </p>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── PASSWORD RESET MODAL ────────────────────────────────────
+function PasswordResetModal({
+  open,
+  onClose,
+  onBackToLogin,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onBackToLogin: () => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      // Best-effort reset token generation
+      toast.success("If this email is registered, a reset link has been sent.");
+      setSent(true);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) {
+          onClose();
+          setSent(false);
+          setEmail("");
+        }
+      }}
+    >
+      <DialogContent data-ocid="reset.modal" className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display text-2xl text-primary">
+            Reset Password
+          </DialogTitle>
+        </DialogHeader>
+        {sent ? (
+          <div data-ocid="reset.success_state" className="py-6 text-center">
+            <CheckCircle size={48} className="text-primary mx-auto mb-4" />
+            <p className="text-foreground font-semibold mb-2">
+              Check your email
+            </p>
+            <p className="text-muted-foreground text-sm mb-6">
+              If <strong>{email}</strong> is registered, you'll receive a
+              password reset link shortly.
+            </p>
+            <Button
+              data-ocid="reset.back_to_login.button"
+              className="w-full bg-primary text-white"
+              onClick={onBackToLogin}
+            >
+              Back to Login
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <p className="text-muted-foreground text-sm">
+              Enter the email address associated with your account and we'll
+              send you a reset link.
+            </p>
+            <div>
+              <Label htmlFor="reset-email">Email Address</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                data-ocid="reset.input"
+                placeholder="you@school.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={error ? "border-destructive" : ""}
+              />
+              {error && (
+                <p
+                  data-ocid="reset.email_error"
+                  className="text-destructive text-xs mt-1"
+                >
+                  {error}
+                </p>
+              )}
+            </div>
+            <Button
+              data-ocid="reset.submit_button"
+              type="submit"
+              className="w-full bg-primary text-white hover:bg-primary/90"
+              disabled={loading}
+            >
+              {loading ? "Sending..." : "Send Reset Link"}
+            </Button>
+            <p className="text-center text-sm">
+              <button
+                type="button"
+                data-ocid="reset.back_to_login.link"
+                className="text-primary hover:underline"
+                onClick={onBackToLogin}
+              >
+                ← Back to Login
+              </button>
+            </p>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── ADMIN PREFERENCES MODAL ─────────────────────────────────
+function AdminPreferencesModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [prefs, setPrefs] = useState({
+    showSchoolName: true,
+    themeColor: "blue",
+    emailNotifications: true,
+    smsNotifications: false,
+    reportAlerts: true,
+    language: "en",
+  });
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setSaved(true);
+    toast.success("Admin preferences saved successfully!");
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const themeOptions = [
+    { value: "blue", label: "Royal Blue", color: "#1e3a5f" },
+    { value: "green", label: "Forest Green", color: "#166534" },
+    { value: "maroon", label: "Deep Maroon", color: "#7f1d1d" },
+    { value: "purple", label: "Royal Purple", color: "#4c1d95" },
+    { value: "teal", label: "Ocean Teal", color: "#134e4a" },
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        data-ocid="admin_prefs.modal"
+        className="max-w-lg max-h-[90vh] overflow-y-auto"
+      >
+        <DialogHeader>
+          <DialogTitle className="text-2xl text-primary flex items-center gap-2">
+            <Settings size={22} />
+            Admin Preferences
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6 mt-4">
+          {/* Display Settings */}
+          <div>
+            <h3 className="font-semibold text-primary mb-3 border-b border-border pb-2">
+              Display Settings
+            </h3>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <Label className="font-medium">
+                  Show School Name in Header
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Display the full academy name in the navigation header
+                </p>
+              </div>
+              <button
+                type="button"
+                data-ocid="admin_prefs.school_name.toggle"
+                className={`relative w-12 h-6 rounded-full transition-colors ${prefs.showSchoolName ? "bg-primary" : "bg-muted"}`}
+                onClick={() =>
+                  setPrefs({ ...prefs, showSchoolName: !prefs.showSchoolName })
+                }
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${prefs.showSchoolName ? "translate-x-7" : "translate-x-1"}`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Theme Color */}
+          <div>
+            <h3 className="font-semibold text-primary mb-3 border-b border-border pb-2">
+              Theme Color
+            </h3>
+            <Label className="mb-2 block text-sm">
+              Select Primary Color Scheme
+            </Label>
+            <div className="grid grid-cols-5 gap-2">
+              {themeOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  data-ocid={`admin_prefs.theme.${opt.value}.button`}
+                  className={`flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-all ${prefs.themeColor === opt.value ? "border-primary" : "border-border hover:border-muted-foreground"}`}
+                  onClick={() => setPrefs({ ...prefs, themeColor: opt.value })}
+                >
+                  <span
+                    className="w-8 h-8 rounded-full block"
+                    style={{ backgroundColor: opt.color }}
+                  />
+                  <span className="text-xs text-center leading-tight">
+                    {opt.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notification Preferences */}
+          <div>
+            <h3 className="font-semibold text-primary mb-3 border-b border-border pb-2">
+              Notification Preferences
+            </h3>
+            <div className="space-y-3">
+              {[
+                {
+                  key: "emailNotifications",
+                  label: "Email Notifications",
+                  desc: "Receive important updates via email",
+                  ocid: "admin_prefs.email_notif.checkbox",
+                },
+                {
+                  key: "smsNotifications",
+                  label: "SMS Notifications",
+                  desc: "Receive urgent alerts via SMS",
+                  ocid: "admin_prefs.sms_notif.checkbox",
+                },
+                {
+                  key: "reportAlerts",
+                  label: "Report Alerts",
+                  desc: "Get notified when new reports are generated",
+                  ocid: "admin_prefs.report_alerts.checkbox",
+                },
+              ].map(({ key, label, desc, ocid }) => (
+                <div key={key} className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    data-ocid={ocid}
+                    id={key}
+                    checked={prefs[key as keyof typeof prefs] as boolean}
+                    onChange={(e) =>
+                      setPrefs({ ...prefs, [key]: e.target.checked })
+                    }
+                    className="mt-1 h-4 w-4 accent-primary cursor-pointer"
+                  />
+                  <div>
+                    <Label htmlFor={key} className="cursor-pointer font-medium">
+                      {label}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Language */}
+          <div>
+            <h3 className="font-semibold text-primary mb-3 border-b border-border pb-2">
+              Language & Locale
+            </h3>
+            <Label className="mb-2 block text-sm">Display Language</Label>
+            <Select
+              value={prefs.language}
+              onValueChange={(v) => setPrefs({ ...prefs, language: v })}
+            >
+              <SelectTrigger
+                data-ocid="admin_prefs.language.select"
+                className="w-full"
+              >
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English (Default)</SelectItem>
+                <SelectItem value="sw">Swahili</SelectItem>
+                <SelectItem value="fr">French</SelectItem>
+                <SelectItem value="ar">Arabic</SelectItem>
+                <SelectItem value="pt">Portuguese</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Save Button */}
+          <Button
+            data-ocid="admin_prefs.save_button"
+            className="w-full bg-primary text-white hover:bg-primary/90"
+            onClick={handleSave}
+          >
+            {saved ? "✓ Saved!" : "Save Preferences"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

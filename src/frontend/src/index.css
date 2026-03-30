@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.625rem;
+
+    --background: 1 0 0;
+    --foreground: 0.15 0.02 252;
+    --card: 1 0 0;
+    --card-foreground: 0.15 0.02 252;
+    --popover: 1 0 0;
+    --popover-foreground: 0.15 0.02 252;
+
+    --primary: 0.31 0.09 252;
+    --primary-foreground: 1 0 0;
+
+    --secondary: 0.76 0.18 72;
+    --secondary-foreground: 0.15 0 0;
+
+    --muted: 0.96 0.005 252;
+    --muted-foreground: 0.5 0.03 252;
+
+    --accent: 0.76 0.18 72;
+    --accent-foreground: 0.15 0 0;
+
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+
+    --border: 0.9 0.01 252;
+    --input: 0.9 0.01 252;
+    --ring: 0.31 0.09 252;
+
+    --chart-1: 0.31 0.09 252;
+    --chart-2: 0.76 0.18 72;
+    --chart-3: 0.55 0.12 200;
+    --chart-4: 0.65 0.15 150;
+    --chart-5: 0.48 0.14 310;
+
+    --sidebar: 0.31 0.09 252;
+    --sidebar-foreground: 1 0 0;
+    --sidebar-primary: 0.76 0.18 72;
+    --sidebar-primary-foreground: 0.15 0 0;
+    --sidebar-accent: 0.25 0.07 252;
+    --sidebar-accent-foreground: 1 0 0;
+    --sidebar-border: 0.38 0.09 252;
+    --sidebar-ring: 0.76 0.18 72;
+  }
+
+  * {
+    @apply border-border;
+    font-family: "Times New Roman", Times, serif !important;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Times New Roman", Times, serif !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  li,
+  td,
+  th {
+    font-family: "Times New Roman", Times, serif !important;
+  }
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-scroll 30s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
